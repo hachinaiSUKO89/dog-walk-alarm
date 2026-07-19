@@ -15,20 +15,34 @@ st.set_page_config(
     layout="wide",
 )
 
+st.markdown(
+    """
+    <style>
+      .block-container { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title("🐶 お犬様散歩アラーム")
 st.caption("気象庁の観測・予報データをもとに、全国の犬の散歩に適した気温かどうかをチェックします。")
 
-with st.sidebar:
-    st.header("設定")
+control_col, button_col = st.columns([4, 1])
+with control_col:
     surface = st.radio(
         "地面タイプ",
         options=["asphalt", "soil"],
         format_func=lambda s: SURFACE_LABELS[s],
+        horizontal=True,
         help="散歩コースの主な路面素材を選んでください。路面温度の推定に使用します。",
     )
-    if st.button("🔄 最新データに更新"):
+with button_col:
+    st.write("")
+    if st.button("🔄 更新"):
         fetch_all_prefectures.clear()
         st.rerun()
+
+with st.expander("ℹ️ 使い方・注意事項"):
     st.caption("気象庁のアメダス現在気温・天気予報を10分キャッシュして表示しています。")
     st.caption(
         "※ 路面温度は現在気温からの概算(目安)です。実際は日射・風・時間帯・"
