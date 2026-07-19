@@ -139,40 +139,25 @@ def judge_walk_suitability(air_temp, surface="asphalt", weather_code=None, now=N
 
     if air_temp < 0:
         level = "cold"
-        message = (
-            f"気温{air_temp:.0f}℃と厳寒です。凍結路面にも注意し、"
-            "短時間の散歩・防寒着の着用を検討しましょう。"
-        )
+        message = "厳寒です。凍結路面にも注意し、短時間の散歩・防寒着の着用を検討しましょう。"
     elif air_temp < 5:
         level = "cold"
-        message = (
-            f"気温{air_temp:.0f}℃で肌寒いです。小型犬・短毛種は防寒着を、"
-            "散歩時間は短めにするのがおすすめです。"
-        )
+        message = "肌寒いです。小型犬・短毛種は防寒着を、散歩時間は短めにするのがおすすめです。"
     elif surface == "asphalt" and surface_temp >= 60:
         level = "danger"
         message = (
-            f"路面温度は推定約{surface_temp:.0f}℃。肉球やけどの危険が高いため、"
-            "日中の散歩は避け、早朝・夜間の涼しい時間帯にしましょう。"
+            "肉球やけどの危険が高いため、日中の散歩は避け、"
+            "早朝・夜間の涼しい時間帯にしましょう。"
         )
     elif air_temp >= 32 or (surface == "asphalt" and surface_temp >= 50):
         level = "danger"
-        message = (
-            f"気温{air_temp:.0f}℃・推定路面温度約{surface_temp:.0f}℃。"
-            "熱中症・やけどのリスクが高い状況です。散歩は控えるか早朝夜間のみに。"
-        )
+        message = "熱中症・やけどのリスクが高い状況です。散歩は控えるか早朝夜間のみに。"
     elif air_temp >= 28 or (surface == "asphalt" and surface_temp >= 40):
         level = "caution"
-        message = (
-            f"気温{air_temp:.0f}℃・推定路面温度約{surface_temp:.0f}℃。"
-            f"{surface_label}は熱がこもりやすいので、日陰や涼しい時間帯を選びましょう。"
-        )
+        message = f"{surface_label}は熱がこもりやすいので、日陰や涼しい時間帯を選びましょう。"
     elif air_temp <= 28:
         level = "safe"
-        message = (
-            f"気温{air_temp:.0f}℃・推定路面温度約{surface_temp:.0f}℃で、"
-            "散歩に適した過ごしやすいコンディションです。"
-        )
+        message = "散歩に適した過ごしやすいコンディションです。"
     else:
         level = "caution"
         message = "念のため路面温度や犬の様子を確認しながら散歩しましょう。"
