@@ -61,7 +61,9 @@ def render_tile_map(data, surface="asphalt"):
             continue
         row, col = pos
 
-        judgement = judge_walk_suitability(pref.get("current_temp"), surface)
+        judgement = judge_walk_suitability(
+            pref.get("current_temp"), surface, pref.get("weather_code")
+        )
         emoji, weather_label = get_weather_icon(pref.get("weather_code"))
 
         current_temp = pref.get("current_temp")

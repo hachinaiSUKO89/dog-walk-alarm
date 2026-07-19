@@ -3,10 +3,12 @@
 路面温度の推定は、気温と路面温度の関係としてよく知られる目安値
 (気温25℃→アスファルト路面52℃、30℃→60℃、35℃→65℃ 前後)を基準点とした
 線形補間による概算であり、厳密な物理計算ではない点に留意すること。
-日射・風・時間帯・路面の色や状態によって実際の値は大きく変動する。
+これは「直射日光が当たり続けている場合」の目安のため、実際の天気
+(曇り・雨・雪)によって日射による上乗せ分を補正している。風・時間帯・
+路面の色や状態によっても実際の値は大きく変動する。
 """
 
-# (気温, 推定路面温度) の基準点。アスファルトは直射日光下を想定した高めの値、
+# (気温, 推定路面温度) の基準点。直射日光下を想定した高めの値。
 # 土・芝は保熱しにくいため上昇幅を小さく設定している。
 _ASPHALT_POINTS = [
     (0, 5), (10, 18), (15, 28), (20, 38), (25, 52), (30, 60), (35, 65), (40, 71),
@@ -14,6 +16,17 @@ _ASPHALT_POINTS = [
 _SOIL_POINTS = [
     (0, 2), (10, 14), (15, 20), (20, 27), (25, 33), (30, 40), (35, 45), (40, 50),
 ]
+
+# 天気(気象庁天気コードの先頭桁)による日射補正係数。
+# 曇り・雨・雪の日は直射日光が弱い/無いため、気温から上乗せされる分を
+# この係数で割り引く。1.0=快晴と同等、0に近いほど日射の影響が小さい。
+_SUN_FACTOR_BY_PREFIX = {
+    "1": 1.0,   # 晴れ系
+    "2": 0.55,  # 曇り系
+    "3": 0.25,  # 雨系
+    "4": 0.2,   # 雪系
+}
+_DEFAULT_SUN_FACTOR = 0.7  # 天気コードが不明な場合の中間的な係数
 
 SURFACE_LABELS = {"asphalt": "アスファルト", "soil": "土・芝"}
 
@@ -33,12 +46,26 @@ def _interpolate(temp, points):
     return y0 + ratio * (y1 - y0)
 
 
-def estimate_surface_temp(air_temp, surface="asphalt"):
-    """気温(℃)から地面表面温度の概算値(℃)を返す。"""
+def sun_factor(weather_code):
+    """天気コードから日射補正係数(0〜1)を返す。"""
+    if weather_code is None:
+        return _DEFAULT_SUN_FACTOR
+    code = str(weather_code)
+    return _SUN_FACTOR_BY_PREFIX.get(code[:1], _DEFAULT_SUN_FACTOR)
+
+
+def estimate_surface_temp(air_temp, surface="asphalt", weather_code=None):
+    """気温(℃)と天気から地面表面温度の概算値(℃)を返す。
+
+    直射日光下を想定した基準カーブに対し、天気による日射補正係数を
+    かけた上で気温に上乗せする(曇り・雨の日は上乗せ分を割り引く)。
+    """
     if air_temp is None:
         return None
     points = _ASPHALT_POINTS if surface == "asphalt" else _SOIL_POINTS
-    return round(_interpolate(air_temp, points), 1)
+    full_sun_temp = _interpolate(air_temp, points)
+    boost = (full_sun_temp - air_temp) * sun_factor(weather_code)
+    return round(air_temp + boost, 1)
 
 
 LEVEL_STYLE = {
@@ -50,8 +77,8 @@ LEVEL_STYLE = {
 }
 
 
-def judge_walk_suitability(air_temp, surface="asphalt"):
-    """気温と地面タイプから散歩適性を判定する。
+def judge_walk_suitability(air_temp, surface="asphalt", weather_code=None):
+    """気温・地面タイプ・天気から散歩適性を判定する。
 
     戻り値: {"level", "emoji", "label", "color", "message", "surface_temp_est"}
     """
@@ -67,7 +94,7 @@ def judge_walk_suitability(air_temp, surface="asphalt"):
             "surface_temp_est": None,
         }
 
-    surface_temp = estimate_surface_temp(air_temp, surface)
+    surface_temp = estimate_surface_temp(air_temp, surface, weather_code)
     surface_label = SURFACE_LABELS[surface]
 
     if air_temp < 0:

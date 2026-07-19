@@ -39,7 +39,9 @@ data = fetch_all_prefectures()
 
 rows = []
 for pref in data:
-    judgement = judge_walk_suitability(pref.get("current_temp"), surface)
+    judgement = judge_walk_suitability(
+        pref.get("current_temp"), surface, pref.get("weather_code")
+    )
     emoji, weather_label = get_weather_icon(pref.get("weather_code"))
     rows.append(
         {
